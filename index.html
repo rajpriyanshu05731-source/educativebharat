@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Educative Bharat – Study + Games</title>
+
+<style>
+body{margin:0;font-family:Poppins,sans-serif;background:#f4f7fb}
+.dark{background:#0b1c2d;color:#fff}
+.hero{background:#0d47a1;color:#fff;padding:70px;text-align:center}
+nav{background:#fff;display:flex;gap:15px;justify-content:center;position:sticky;top:0}
+nav a{padding:14px;cursor:pointer;color:#0d47a1;font-weight:600}
+.cards{display:flex;flex-wrap:wrap;justify-content:center;padding:30px}
+.card{background:#fff;width:240px;margin:12px;padding:30px;border-radius:16px;cursor:pointer;text-align:center}
+.page{display:none;padding:30px}
+.box{max-width:1000px;margin:auto;background:#fff;padding:25px;border-radius:16px}
+video{width:100%;border-radius:12px}
+.video-row{display:flex;gap:12px;overflow-x:auto}
+.video-box{position:relative}
+.video-thumb{width:160px;border-radius:10px;cursor:pointer}
+.del{position:absolute;top:5px;right:5px;background:red;color:#fff;border:none;border-radius:50%;width:22px;height:22px;cursor:pointer}
+.quiz-opt{background:#e3eaf7;padding:10px;margin:6px 0;border-radius:8px;cursor:pointer}
+footer{text-align:center;background:#111;color:#fff;padding:12px;margin-top:30px}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:8px;text-align:center}
+</style>
+</head>
+
+<body>
+
+<div class="hero">
+<h1>Educative Bharat</h1>
+<p>Study + Games = Smart Learning 🇮🇳</p>
+</div>
+
+<nav>
+<a onclick="home()">Home</a>
+<a onclick="openGames()">🎮 Games</a>
+<a onclick="openLeader()">🏆 Leaderboard</a>
+<a onclick="toggleDark()">🌙</a>
+</nav>
+
+<div id="home" class="cards">
+<div class="card" onclick="openCourse('Math')">📘 Math</div>
+<div class="card" onclick="openCourse('Science')">🔬 Science</div>
+<div class="card" onclick="openCourse('GK')">🌍 GK</div>
+</div>
+
+<!-- COURSE -->
+<div id="course" class="page">
+<div class="box">
+<h2 id="courseTitle"></h2>
+<video id="player" controls></video><br><br>
+<input type="file" accept="video/*" onchange="addVideo(this)">
+<div id="videos" class="video-row"></div>
+<br><button onclick="home()">⬅ Back</button>
+</div>
+</div>
+
+<!-- GAME -->
+<div id="game" class="page">
+<div class="box">
+<h2>Quiz Game</h2>
+<div id="q"></div>
+<div id="opts"></div>
+<p id="score"></p>
+<button onclick="start()">🔄 Play Again</button>
+<button onclick="home()">⬅ Back</button>
+</div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="leader" class="page">
+<div class="box">
+<h2>🏆 Leaderboard</h2>
+<table>
+<thead><tr><th>Rank</th><th>Name</th><th>Score</th></tr></thead>
+<tbody id="leaderBody"></tbody>
+</table>
+<button onclick="home()">⬅ Back</button>
+</div>
+</div>
+
+<footer>© 2026 Educative Bharat</footer>
+
+<script>
+let adminPass="452323";
+let currentCourse="";
+let quiz=[
+{q:"2+2?",o:["3","4","5"],a:1},
+{q:"Capital of India?",o:["Delhi","Mumbai","Patna"],a:0},
+{q:"Sun is?",o:["Star","Planet","Moon"],a:0}
+];
+let qi=0,sc=0,user=prompt("Enter your name");
+
+/* NAV */
+function home(){
+home.style.display="flex";
+course.style.display=game.style.display=leader.style.display="none";
+}
+function openCourse(c){
+currentCourse=c;
+home.style.display="none";
+course.style.display="block";
+courseTitle.innerText=c+" Course";
+loadVideos();
+}
+function openGames(){
+home.style.display="none";
+game.style.display="block";
+start();
+}
+function openLeader(){
+home.style.display="none";
+leader.style.display="block";
+loadLeader();
+}
+function toggleDark(){document.body.classList.toggle("dark")}
+
+/* VIDEO SAVE + ADMIN DELETE */
+function addVideo(inp){
+let file=inp.files[0];
+let url=URL.createObjectURL(file);
+let data=JSON.parse(localStorage.getItem(currentCourse)||"[]");
+data.push(url);
+localStorage.setItem(currentCourse,JSON.stringify(data));
+loadVideos();
+}
+function loadVideos(){
+videos.innerHTML="";
+let data=JSON.parse(localStorage.getItem(currentCourse)||"[]");
+data.forEach((url,i)=>{
+let box=document.createElement("div");
+box.className="video-box";
+let v=document.createElement("video");
+v.src=url;v.className="video-thumb";v.onclick=()=>player.src=url;
+let d=document.createElement("button");
+d.className="del";d.innerText="×";
+d.onclick=()=>{
+let p=prompt("Admin Password");
+if(p===adminPass){
+data.splice(i,1);
+localStorage.setItem(currentCourse,JSON.stringify(data));
+loadVideos();
+}else alert("Wrong Password");
+};
+box.appendChild(v);box.appendChild(d);videos.appendChild(box);
+});
+}
+
+/* QUIZ + LEADERBOARD */
+function start(){qi=0;sc=0;loadQ()}
+function loadQ(){
+if(qi>=quiz.length){
+score.innerText="Score: "+sc;
+saveScore(sc);
+return;
+}
+q.innerText=quiz[qi].q;
+opts.innerHTML="";
+quiz[qi].o.forEach((op,i)=>{
+let d=document.createElement("div");
+d.className="quiz-opt";
+d.innerText=op;
+d.onclick=()=>{if(i===quiz[qi].a)sc++;qi++;loadQ()};
+opts.appendChild(d);
+});
+}
+function saveScore(s){
+let data=JSON.parse(localStorage.getItem("leader")||"{}");
+if(!data[user]||s>data[user])data[user]=s;
+localStorage.setItem("leader",JSON.stringify(data));
+}
+function loadLeader(){
+let data=JSON.parse(localStorage.getItem("leader")||"{}");
+let arr=Object.entries(data).sort((a,b)=>b[1]-a[1]);
+leaderBody.innerHTML="";
+arr.forEach((u,i)=>{
+leaderBody.innerHTML+=`<tr><td>${i+1}</td><td>${u[0]}</td><td>${u[1]}</td></tr>`;
+});
+}
+</script>
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6530050783857934"
+     crossorigin="anonymous"></script>
